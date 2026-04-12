@@ -1,0 +1,10 @@
+# Python files to ignore
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
