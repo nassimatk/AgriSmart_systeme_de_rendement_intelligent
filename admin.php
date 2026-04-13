@@ -1,3 +1,21 @@
+<?php
+require_once 'db.php';
+
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    header('Location: login.php');
+    exit;
+}
+
+$stats_query1 = $conn->query("SELECT COUNT(*) as count FROM users WHERE role='user'");
+$users_count = $stats_query1->fetch_assoc()['count'];
+
+$stats_query2 = $conn->query("SELECT COUNT(DISTINCT farm_name) as count FROM users WHERE role='user'");
+$farms_count = $stats_query2->fetch_assoc()['count'];
+
+$alerts_count = rand(1, 5); // Simulate active alerts
+
+$users = $conn->query("SELECT * FROM users WHERE role='user' ORDER BY reg_date DESC LIMIT 10");
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -83,7 +101,7 @@
                     <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
                 </div>
                 <!-- Bouton déconnexion -->
-                <a href="login.html" class="h-10 w-10 border-2 border-gray-200 rounded-full bg-gray-50 flex items-center justify-center text-gray-600 font-bold shadow-sm hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors" title="Quitter le mode admin">
+                <a href="logout.php" class="h-10 w-10 border-2 border-gray-200 rounded-full bg-gray-50 flex items-center justify-center text-gray-600 font-bold shadow-sm hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors" title="Quitter le mode admin">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </a>
             </div>
@@ -102,7 +120,7 @@
                         </div>
                         <div>
                             <p class="text-sm font-medium text-gray-500">Utilisateurs Actifs</p>
-                            <p class="text-2xl font-bold text-gray-800">124</p>
+                            <p class="text-2xl font-bold text-gray-800"><?= $users_count ?></p>
                         </div>
                     </div>
                     
@@ -112,7 +130,7 @@
                         </div>
                         <div>
                             <p class="text-sm font-medium text-gray-500">Exploitations Connectées</p>
-                            <p class="text-2xl font-bold text-gray-800">45</p>
+                            <p class="text-2xl font-bold text-gray-800"><?= $farms_count ?></p>
                         </div>
                     </div>
 
@@ -122,7 +140,7 @@
                         </div>
                         <div>
                             <p class="text-sm font-medium text-gray-500">Alertes Capteurs</p>
-                            <p class="text-2xl font-bold text-gray-800">3</p>
+                            <p class="text-2xl font-bold text-gray-800"><?= $alerts_count ?></p>
                             <p class="text-xs text-orange-600 font-medium">Nécessite attention</p>
                         </div>
                     </div>
@@ -151,25 +169,26 @@
                             </thead>
                             <tbody class="divide-y divide-gray-100 text-sm">
                                 
-                                <!-- Ligne Utilisateur 1 -->
+                                <?php while($u = $users->fetch_assoc()): 
+                                    $initials = strtoupper(substr($u['firstname'], 0, 1) . substr($u['lastname'], 0, 1));
+                                ?>
                                 <tr class="hover:bg-gray-50 transition-colors">
                                     <td class="px-6 py-4">
                                         <div class="flex items-center">
                                             <div class="h-10 w-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold mr-3">
-                                                AA
+                                                <?= $initials ?>
                                             </div>
                                             <div>
-                                                <p class="font-bold text-gray-800">Ahmed Amrani</p>
-                                                <p class="text-xs text-gray-500">ahmed@domaine-chtouka.ma</p>
+                                                <p class="font-bold text-gray-800"><?= htmlspecialchars($u['firstname'].' '.$u['lastname']) ?></p>
+                                                <p class="text-xs text-gray-500"><?= htmlspecialchars($u['email']) ?></p>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="px-6 py-4">
-                                        <p class="font-medium text-gray-800">Domaine Chtouka</p>
-                                        <p class="text-xs text-gray-500">Agadir-Chtouka</p>
+                                        <p class="font-medium text-gray-800"><?= htmlspecialchars($u['farm_name']) ?></p>
                                     </td>
                                     <td class="px-6 py-4 text-gray-600">
-                                        12 Mars 2026
+                                        <?= date('d M Y', strtotime($u['reg_date'])) ?>
                                     </td>
                                     <td class="px-6 py-4">
                                         <span class="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full border border-green-200">
@@ -177,128 +196,15 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 text-right space-x-2">
-                                        <button class="text-gray-400 hover:text-blue-600 transition-colors" title="Éditer">
+                                        <a href="edit_user.php?id=<?= $u['id'] ?>" class="inline-block text-gray-400 hover:text-blue-600 transition-colors" title="Éditer">
                                             <i class="fa-solid fa-pen-to-square"></i>
-                                        </button>
-                                        <button class="text-gray-400 hover:text-nature transition-colors" title="Voir les données">
-                                            <i class="fa-solid fa-chart-line"></i>
-                                        </button>
-                                        <button class="text-gray-400 hover:text-red-500 transition-colors" title="Suspendre">
-                                            <i class="fa-solid fa-ban"></i>
-                                        </button>
+                                        </a>
                                     </td>
                                 </tr>
-
-                                <!-- Ligne Utilisateur 2 -->
-                                <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center">
-                                            <div class="h-10 w-10 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center font-bold mr-3">
-                                                FB
-                                            </div>
-                                            <div>
-                                                <p class="font-bold text-gray-800">Fatima Benali</p>
-                                                <p class="text-xs text-gray-500">f.benali@agri-taroudant.com</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <p class="font-medium text-gray-800">Serres Taroudant</p>
-                                        <p class="text-xs text-gray-500">Taroudant Province</p>
-                                    </td>
-                                    <td class="px-6 py-4 text-gray-600">
-                                        05 Févr. 2026
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full border border-green-200">
-                                            Actif
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right space-x-2">
-                                        <button class="text-gray-400 hover:text-blue-600 transition-colors" title="Éditer">
-                                            <i class="fa-solid fa-pen-to-square"></i>
-                                        </button>
-                                        <button class="text-gray-400 hover:text-nature transition-colors" title="Voir les données">
-                                            <i class="fa-solid fa-chart-line"></i>
-                                        </button>
-                                        <button class="text-gray-400 hover:text-red-500 transition-colors" title="Suspendre">
-                                            <i class="fa-solid fa-ban"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-
-                                <!-- Ligne Utilisateur 3 -->
-                                <tr class="hover:bg-gray-50 transition-colors bg-orange-50/30">
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center">
-                                            <div class="h-10 w-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold mr-3">
-                                                YO
-                                            </div>
-                                            <div>
-                                                <p class="font-bold text-gray-800">Youssef Oufkir</p>
-                                                <p class="text-xs text-gray-500">contact@oufkir-farm.ma</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <p class="font-medium text-gray-800">Oufkir Farm</p>
-                                        <p class="text-xs text-gray-500">Biougra</p>
-                                    </td>
-                                    <td class="px-6 py-4 text-gray-600">
-                                        28 Janv. 2026
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2.5 py-1 bg-orange-100 text-orange-700 text-xs font-semibold rounded-full border border-orange-200">
-                                            Maintenance capteurs
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right space-x-2">
-                                        <button class="text-gray-400 hover:text-blue-600 transition-colors" title="Éditer">
-                                            <i class="fa-solid fa-pen-to-square"></i>
-                                        </button>
-                                        <button class="text-gray-400 hover:text-nature transition-colors" title="Voir les données">
-                                            <i class="fa-solid fa-chart-line"></i>
-                                        </button>
-                                        <button class="text-gray-400 hover:text-red-500 transition-colors" title="Suspendre">
-                                            <i class="fa-solid fa-ban"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-
-                                <!-- Ligne Utilisateur 4 -->
-                                <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center">
-                                            <div class="h-10 w-10 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-bold mr-3">
-                                                SI
-                                            </div>
-                                            <div>
-                                                <p class="font-bold text-gray-800 text-red-400 line-through">Saïd Idrissi</p>
-                                                <p class="text-xs text-gray-400">said@exemple.ma</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <p class="font-medium text-gray-400">Plantations Sud</p>
-                                        <p class="text-xs text-gray-400">Tiznit</p>
-                                    </td>
-                                    <td class="px-6 py-4 text-gray-400">
-                                        15 Nov. 2025
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2.5 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full border border-red-200">
-                                            Suspendu
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right space-x-2">
-                                        <button class="text-gray-400 hover:text-blue-600 transition-colors" title="Éditer">
-                                            <i class="fa-solid fa-pen-to-square"></i>
-                                        </button>
-                                        <button class="text-gray-400 hover:text-green-600 transition-colors" title="Réactiver">
-                                            <i class="fa-solid fa-check-circle"></i>
-                                        </button>
-                                    </td>
-                                </tr>
+                                <?php endwhile; ?>
+                                <?php if($users->num_rows === 0): ?>
+                                <tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Aucun agriculteur inscrit.</td></tr>
+                                <?php endif; ?>
                                 
                             </tbody>
                         </table>
@@ -306,7 +212,7 @@
                     
                     <!-- Pagination simple -->
                     <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-                        <p class="text-sm text-gray-500">Affichage de 1 à 4 sur 124 utilisateurs</p>
+                        <p class="text-sm text-gray-500">Affichage de <?= $users->num_rows ?> utilisateurs</p>
                         <div class="flex space-x-1 text-sm">
                             <button class="px-3 py-1 border border-gray-200 text-gray-400 rounded hover:bg-gray-50 disabled"><i class="fa-solid fa-chevron-left"></i></button>
                             <button class="px-3 py-1 border border-nature bg-nature text-white rounded">1</button>

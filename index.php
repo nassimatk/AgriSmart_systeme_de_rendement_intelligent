@@ -1,3 +1,19 @@
+<?php
+require_once 'db.php';
+
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
+if ($_SESSION['role'] === 'admin') {
+    header('Location: admin.php');
+    exit;
+}
+
+$userName = htmlspecialchars($_SESSION['firstname'] . ' ' . $_SESSION['lastname']);
+$farmName = htmlspecialchars($_SESSION['farm_name']);
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -74,7 +90,7 @@
             <span class="text-xl font-bold tracking-wider">AgriSmart</span>
         </div>
         <nav class="flex-1 px-4 py-6 space-y-2">
-            <a href="index.html" class="flex items-center px-4 py-3 bg-nature text-white rounded-lg shadow-sm transition-colors">
+            <a href="index.php" class="flex items-center px-4 py-3 bg-nature text-white rounded-lg shadow-sm transition-colors">
                 <i class="fa-solid fa-chart-line w-6"></i>
                 <span class="font-medium">Tableau de bord</span>
             </a>
@@ -110,10 +126,10 @@
             </div>
             <div class="flex items-center space-x-6">
                 <div class="hidden md:flex flex-col text-right">
-                    <span class="text-sm font-semibold text-gray-800">Secteur Agadir-Chtouka</span>
-                    <span class="text-xs text-gray-500"><i class="fa-solid fa-location-dot mr-1"></i> Exploitation Principale</span>
+                    <span class="text-sm font-semibold text-gray-800"><?= $farmName ?></span>
+                    <span class="text-xs text-gray-500"><i class="fa-solid fa-user mr-1"></i> <?= $userName ?></span>
                 </div>
-                <a href="login.html" class="h-10 w-10 border-2 border-nature rounded-full bg-gray-100 flex items-center justify-center text-nature font-bold shadow-sm hover:bg-gray-200 transition-colors" title="Se déconnecter">
+                <a href="logout.php" class="h-10 w-10 border-2 border-nature rounded-full bg-gray-100 flex items-center justify-center text-nature font-bold shadow-sm hover:bg-gray-200 transition-colors" title="Se déconnecter">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </a>
             </div>

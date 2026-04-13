@@ -1,3 +1,30 @@
+<?php
+require_once 'db.php';
+
+$error = "";
+$success = "";
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $firstname = $conn->real_escape_string($_POST['firstname']);
+    $lastname = $conn->real_escape_string($_POST['lastname']);
+    $farm_name = $conn->real_escape_string($_POST['farm_name']);
+    $email = $conn->real_escape_string($_POST['email']);
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+
+    $check = $conn->query("SELECT id FROM users WHERE email='$email'");
+    if ($check && $check->num_rows > 0) {
+        $error = "Cet e-mail est déjà utilisé.";
+    } else {
+        $sql = "INSERT INTO users (firstname, lastname, farm_name, email, password) 
+                VALUES ('$firstname', '$lastname', '$farm_name', '$email', '$password')";
+        if ($conn->query($sql) === TRUE) {
+            $success = "Inscription réussie ! Vous pouvez maintenant vous connecter.";
+        } else {
+            $error = "Erreur SQL: " . $conn->error;
+        }
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -44,7 +71,7 @@
             </div>
             
             <div class="relative z-10">
-                <a href="login.html" class="flex items-center space-x-2 mb-8 hover:text-green-100 transition-colors">
+                <a href="login.php" class="flex items-center space-x-2 mb-8 hover:text-green-100 transition-colors">
                     <i class="fa-solid fa-seedling text-3xl drop-shadow-md text-green-300"></i>
                     <span class="text-2xl font-bold tracking-wider drop-shadow-md">AgriSmart</span>
                 </a>
@@ -80,18 +107,25 @@
                 <p class="text-gray-500 text-sm">Enregistrez votre nouvelle exploitation agricole.</p>
             </div>
             
-            <form action="login.html" class="space-y-4">
+            <form method="POST" action="signup.php" class="space-y-4">
+                <?php if(!empty($error)): ?>
+                <div class="bg-red-50 text-red-600 p-3 rounded text-sm font-medium"><?= htmlspecialchars($error) ?></div>
+                <?php endif; ?>
+                <?php if(!empty($success)): ?>
+                <div class="bg-green-50 text-green-600 p-3 rounded text-sm font-medium"><?= htmlspecialchars($success) ?></div>
+                <script>setTimeout(()=>window.location.href='login.php', 2000);</script>
+                <?php endif; ?>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <!-- Prénom -->
                     <div>
                         <label for="firstname" class="block text-sm font-semibold text-gray-700 mb-1">Prénom</label>
-                        <input type="text" id="firstname" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-nature focus:border-nature outline-none transition-all" placeholder="Ahmed" required>
+                        <input type="text" name="firstname" id="firstname" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-nature focus:border-nature outline-none transition-all" placeholder="Ahmed" required>
                     </div>
                     <!-- Nom -->
                     <div>
                         <label for="lastname" class="block text-sm font-semibold text-gray-700 mb-1">Nom</label>
-                        <input type="text" id="lastname" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-nature focus:border-nature outline-none transition-all" placeholder="Amrani" required>
+                        <input type="text" name="lastname" id="lastname" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-nature focus:border-nature outline-none transition-all" placeholder="Amrani" required>
                     </div>
                 </div>
 
@@ -102,7 +136,7 @@
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fa-solid fa-tractor text-gray-400 group-focus-within:text-nature transition-colors"></i>
                         </div>
-                        <input type="text" id="farm-name" class="pl-10 w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-nature focus:border-nature outline-none transition-all" placeholder="Domaine Chtouka" required>
+                        <input type="text" name="farm_name" id="farm-name" class="pl-10 w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-nature focus:border-nature outline-none transition-all" placeholder="Domaine Chtouka" required>
                     </div>
                 </div>
 
@@ -113,7 +147,7 @@
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fa-regular fa-envelope text-gray-400 group-focus-within:text-nature transition-colors"></i>
                         </div>
-                        <input type="email" id="email" class="pl-10 w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-nature focus:border-nature outline-none transition-all" placeholder="contact@domaine.ma" required>
+                        <input type="email" name="email" id="email" class="pl-10 w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-nature focus:border-nature outline-none transition-all" placeholder="contact@domaine.ma" required>
                     </div>
                 </div>
                 
@@ -124,7 +158,7 @@
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fa-solid fa-shield-halved text-gray-400 group-focus-within:text-nature transition-colors"></i>
                         </div>
-                        <input type="password" id="password" class="pl-10 w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-nature focus:border-nature outline-none transition-all" placeholder="••••••••" required>
+                        <input type="password" name="password" id="password" class="pl-10 w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-nature focus:border-nature outline-none transition-all" placeholder="••••••••" required>
                     </div>
                     <p class="text-xs text-gray-500 mt-1">Doit contenir au moins 8 caractères.</p>
                 </div>
@@ -138,7 +172,7 @@
                 </div>
                 
                 <!-- Bouton d'inscription -->
-                <button type="button" onclick="window.location.href='index.html'" class="w-full bg-nature hover:bg-nature-light text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 mt-2">
+                <button type="submit" class="w-full bg-nature hover:bg-nature-light text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 mt-2">
                     Créer mon exploitation
                 </button>
             </form>
@@ -146,7 +180,7 @@
             <div class="mt-6 text-center border-t border-gray-100 pt-5">
                 <p class="text-sm text-gray-600">
                     Vous possédez déjà un système ? 
-                    <a href="login.html" class="font-bold text-nature hover:text-nature-light hover:underline transition-colors">Se connecter</a>
+                    <a href="login.php" class="font-bold text-nature hover:text-nature-light hover:underline transition-colors">Se connecter</a>
                 </p>
             </div>
         </div>

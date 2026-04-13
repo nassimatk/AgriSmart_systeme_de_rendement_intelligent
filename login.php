@@ -1,3 +1,45 @@
+<?php
+require_once 'db.php';
+
+if (isset($_SESSION['user_id'])) {
+    if ($_SESSION['role'] === 'admin') {
+        header('Location: admin.php');
+    } else {
+        header('Location: index.php');
+    }
+    exit;
+}
+
+$error = "";
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $email = $conn->real_escape_string($_POST['email']);
+    $password = $_POST['password'];
+
+    $result = $conn->query("SELECT * FROM users WHERE email='$email'");
+    if ($result && $result->num_rows > 0) {
+        $user = $result->fetch_assoc();
+        if (password_verify($password, $user['password'])) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['role'] = $user['role'];
+            $_SESSION['firstname'] = $user['firstname'];
+            $_SESSION['lastname'] = $user['lastname'];
+            $_SESSION['farm_name'] = $user['farm_name'];
+
+            if ($user['role'] === 'admin') {
+                header('Location: admin.php');
+            } else {
+                header('Location: index.php');
+            }
+            exit;
+        } else {
+            $error = "Mot de passe incorrect.";
+        }
+    } else {
+        $error = "Aucun compte trouvé avec cet e-mail.";
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -44,7 +86,7 @@
             </div>
             
             <div class="relative z-10">
-                <a href="login.html" class="flex items-center space-x-2 mb-8 hover:text-green-100 transition-colors">
+                <a href="login.php" class="flex items-center space-x-2 mb-8 hover:text-green-100 transition-colors">
                     <i class="fa-solid fa-seedling text-3xl drop-shadow-md"></i>
                     <span class="text-2xl font-bold tracking-wider drop-shadow-md">AgriSmart</span>
                 </a>
@@ -69,7 +111,10 @@
                 <p class="text-gray-500 text-sm">Veuillez vous connecter à votre espace agriculteur.</p>
             </div>
             
-            <form action="index.html" class="space-y-5">
+            <form method="POST" action="login.php" class="space-y-5">
+                <?php if(!empty($error)): ?>
+                <div class="bg-red-50 text-red-600 p-3 rounded text-sm font-medium"><?= htmlspecialchars($error) ?></div>
+                <?php endif; ?>
                 <!-- Champ E-mail -->
                 <div>
                     <label for="email" class="block text-sm font-semibold text-gray-700 mb-1.5">Adresse E-mail</label>
@@ -77,7 +122,7 @@
                         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                             <i class="fa-regular fa-envelope text-gray-400 group-focus-within:text-nature transition-colors"></i>
                         </div>
-                        <input type="email" id="email" class="pl-10 w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-nature focus:border-nature outline-none transition-all" placeholder="agriculteur@souss-massa.ma" required>
+                        <input type="email" name="email" id="email" class="pl-10 w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-nature focus:border-nature outline-none transition-all" placeholder="agriculteur@souss-massa.ma" required>
                     </div>
                 </div>
                 
@@ -91,7 +136,7 @@
                         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                             <i class="fa-solid fa-lock text-gray-400 group-focus-within:text-nature transition-colors"></i>
                         </div>
-                        <input type="password" id="password" class="pl-10 w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-nature focus:border-nature outline-none transition-all" placeholder="••••••••" required>
+                        <input type="password" name="password" id="password" class="pl-10 w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-nature focus:border-nature outline-none transition-all" placeholder="••••••••" required>
                     </div>
                 </div>
                 
@@ -102,8 +147,7 @@
                 </div>
                 
                 <!-- Bouton de connexion -->
-                <!-- Redirection vers index.html via onclick pour simuler le bon fonctionnement sans backend -->
-                <button type="button" onclick="window.location.href='index.html'" class="w-full bg-nature hover:bg-nature-light text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 mt-2 flex items-center justify-center">
+                <button type="submit" class="w-full bg-nature hover:bg-nature-light text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 mt-2 flex items-center justify-center">
                     <span>Accéder au Dashboard</span>
                     <i class="fa-solid fa-arrow-right ml-2 opacity-80"></i>
                 </button>
@@ -112,9 +156,9 @@
             <div class="mt-8 text-center border-t border-gray-100 pt-6">
                 <p class="text-sm text-gray-600 mb-3">
                     Nouveau sur AgriSmart ? 
-                    <a href="signup.html" class="font-bold text-nature hover:text-nature-light hover:underline transition-colors">Créer une exploitation</a>
+                    <a href="signup.php" class="font-bold text-nature hover:text-nature-light hover:underline transition-colors">Créer une exploitation</a>
                 </p>
-                <a href="admin.html" class="text-xs text-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center">
+                <a href="admin.php" class="text-xs text-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center">
                     <i class="fa-solid fa-shield-halved mr-1"></i> Accès Administrateur
                 </a>
             </div>
